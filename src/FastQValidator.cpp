@@ -29,6 +29,7 @@ int main(int argc, char ** argv)
    int minReadLength = 10;
    int printableErrors = 20;
    int maxErrors = -1;
+   int seqLimit = 0;
    String testParam;
    BaseAsciiMap::SPACE_TYPE myBaseType = BaseAsciiMap::UNKNOWN;
    
@@ -39,6 +40,7 @@ int main(int argc, char ** argv)
    bool ignoreErrors = false;
    bool baseComposition = false;
    bool avgQual = false;
+   bool qualRange = false;
    bool quiet = false;
    bool params = false;
    bool disableSeqIDCheck = false;
@@ -47,11 +49,13 @@ int main(int argc, char ** argv)
       LONG_STRINGPARAMETER("file", &filename)
       LONG_PARAMETER("baseComposition", &baseComposition)
       LONG_PARAMETER("avgQual", &avgQual)
+      LONG_PARAMETER("qualRange", &qualRange)
       LONG_PARAMETER("disableSeqIDCheck", &disableSeqIDCheck)
       LONG_PARAMETER("quiet", &quiet)
       LONG_PARAMETER("params", &params)
       LONG_INTPARAMETER("minReadLen", &minReadLength)
       LONG_INTPARAMETER("maxErrors", &maxErrors)
+      LONG_INTPARAMETER("seqLimit", &seqLimit)
       LONG_PARAMETER_GROUP("Space Type")
          EXCLUSIVE_PARAMETER("baseSpace", &baseSpace)
          EXCLUSIVE_PARAMETER("colorSpace", &colorSpace)
@@ -139,6 +143,8 @@ int main(int argc, char ** argv)
       std::cout << "\t--disableSeqIDCheck  : Disable the unique sequence identifier check.\n";
       std::cout << "\t                       Use this option to save memory since the sequence id\n";
       std::cout << "\t                       check uses a lot of memory.\n";
+      std::cout << "\t--seqLimit           : Limit the number of reads to verify. (Defaults to read the whole FASTQ)\n";
+      std::cout << "\t--qualRange          : Print the phred quality range.\n";
       std::cout << "\t--params             : Print the parameter settings.\n";
       std::cout << "\t--quiet              : Suppresses the display of errors and summary statistics.\n";
       std::cout << "\t                       Does not affect the printing of Base Composition Statistics.\n";
@@ -173,12 +179,14 @@ int main(int argc, char ** argv)
 
    validator.setMaxErrors(maxErrors);
 
-   FastQStatus::Status status = validator.validateFastQFile(filename, baseComposition, myBaseType, avgQual);
+   FastQStatus::Status status = validator.validateFastQFile(filename, baseComposition, myBaseType, avgQual, seqLimit, qualRange);
 
-   if(!quiet)
-   {
+   if(!quiet) {
       std::cout << "Returning: " << status << " : " << FastQStatus::getStatusString(status)
                 << std::endl;
+   } else {
+      // Print only the verdict
+      std::cout << status << "\t" << int(validator.phredMin) << "\t" << int(validator.phredMax) << std::endl;
    }
 
    return(status);
